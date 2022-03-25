@@ -196,6 +196,41 @@ func NewDevice(params DeviceParams) (*Device, error) {
 	return dev, nil
 }
 
+func (dev *Device) getSupportedServices2(resp *http.Response) {
+	data, _ := ioutil.ReadAll(resp.Body)
+	realData := gosoap.SoapMessage(string(data)).Body()
+	getServiceResp := device.GetServicesResponse{}
+	err := xml.Unmarshal([]byte(realData), &getServiceResp)
+	if err != nil {
+		fmt.Printf("解析GetService失败！err=%v", err)
+		return
+	}
+	for _, service := range getServiceResp.Service {
+		fmt.Printf("service : %v %v\n", service.XAddr[strings.LastIndex(string(service.XAddr), "/")+1:], service.XAddr)
+		dev.addEndpoint(string(service.XAddr[strings.LastIndex(string(service.XAddr), "/")+1:]), string(service.XAddr))
+	}
+}
+
+func NewDevice2(params DeviceParams) (*Device, error) {
+	dev := new(Device)
+	dev.params = params
+	dev.endpoints = make(map[string]string)
+	dev.addEndpoint("Device", "http://"+dev.params.Xaddr+"/onvif/device_service")
+
+	getCapabilities := device.GetServices{}
+
+	resp, err := dev.CallMethod(getCapabilities)
+	//fmt.Println(resp.Request.Host)
+	//fmt.Println(readResponse(resp))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		//panic(errors.New("camera is not available at " + xaddr + " or it does not support ONVIF services"))
+		return nil, errors.New("camera is not available at " + xaddr + " or it does not support ONVIF services")
+	}
+
+	dev.getSupportedServices2(resp)
+	return dev, nil
+}
+
 func (dev *Device) addEndpoint(Key, Value string) {
 	//use lowCaseKey
 	//make key having ability to handle Mixed Case for Different vendor devcie (e.g. Events EVENTS, events)
