@@ -223,8 +223,8 @@ func NewDevice2(params DeviceParams) (*Device, error) {
 	//fmt.Println(resp.Request.Host)
 	//fmt.Println(readResponse(resp))
 	if err != nil || resp.StatusCode != http.StatusOK {
-		//panic(errors.New("camera is not available at " + xaddr + " or it does not support ONVIF services"))
-		return nil, errors.New("camera is not available at " + xaddr + " or it does not support ONVIF services")
+		//panic(errors.New("camera is not available at " + dev.params.Xaddr + " or it does not support ONVIF services"))
+		return nil, errors.New("camera is not available at " + dev.params.Xaddr + " or it does not support ONVIF services")
 	}
 
 	dev.getSupportedServices2(resp)
